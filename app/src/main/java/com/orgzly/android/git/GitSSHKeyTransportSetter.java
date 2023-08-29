@@ -1,5 +1,6 @@
 package com.orgzly.android.git;
 
+
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
@@ -18,7 +19,7 @@ public class GitSSHKeyTransportSetter implements GitTransportSetter {
     private SshSessionFactory sshSessionFactory;
     private TransportConfigCallback configCallback;
 
-    public GitSSHKeyTransportSetter(String pathToSSHKey) {
+    public GitSSHKeyTransportSetter(String pathToSSHKey, String password) {
         sshKeyPath = pathToSSHKey;
         sshSessionFactory = new JschConfigSessionFactory() {
             @Override
@@ -29,7 +30,11 @@ public class GitSSHKeyTransportSetter implements GitTransportSetter {
             @Override
             protected JSch createDefaultJSch(FS fs) throws JSchException {
                 JSch defaultJSch = super.createDefaultJSch(fs);
-                defaultJSch.addIdentity(sshKeyPath);
+                if (password.equals("")) {
+                    defaultJSch.addIdentity(sshKeyPath);
+                } else {
+                    defaultJSch.addIdentity(sshKeyPath, password);
+                }
                 return defaultJSch;
             }
 

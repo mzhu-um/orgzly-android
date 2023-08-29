@@ -561,6 +561,7 @@
     <string name="pref_key_git_https_username" translatable="false">pref_key_git_https_username</string>
     <string name="pref_key_git_https_password" translatable="false">pref_key_git_https_password</string>
     <string name="pref_key_git_ssh_key_path" traslatable="false">pref_key_git_ssh_key_path</string>
+    <string name="pref_key_git_ssh_key_password" traslatable="false">pref_key_git_ssh_key_password</string>
     <string name="pref_key_git_repository_filepath" traslatable="false">pref_key_git_repository_filepath</string>
     <string name="pref_key_git_remote_name" traslatable="false">pref_key_git_remote_name</string>
     <string name="pref_key_git_branch_name" traslatable="false">pref_key_git_branch_name</string>

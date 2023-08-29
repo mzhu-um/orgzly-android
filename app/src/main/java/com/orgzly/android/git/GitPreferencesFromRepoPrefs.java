@@ -1,6 +1,7 @@
 package com.orgzly.android.git;
 
 import android.net.Uri;
+import android.os.Environment;
 
 import com.orgzly.R;
 import com.orgzly.android.prefs.AppPreferences;
@@ -23,8 +24,10 @@ public class GitPreferencesFromRepoPrefs implements GitPreferences {
         } else {
             // assume SSH, since ssh:// usually isn't specified as the scheme when cloning via SSH.
             String sshKeyPath = repoPreferences.getStringValueWithGlobalDefault(
-                    R.string.pref_key_git_ssh_key_path, "orgzly");
-            return new GitSSHKeyTransportSetter(sshKeyPath);
+                    R.string.pref_key_git_ssh_key_path, "");
+            String sshKeyPassword = repoPreferences.getStringValueWithGlobalDefault(
+                    R.string.pref_key_git_ssh_key_password, "");
+            return new GitSSHKeyTransportSetter(sshKeyPath, sshKeyPassword);
         }
     }
 

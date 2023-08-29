@@ -84,6 +84,10 @@ class GitRepoActivity : CommonActivity(), GitPreferences {
                         binding.activityRepoGitSshKeyLayout,
                         R.string.pref_key_git_ssh_key_path),
                 Field(
+                        binding.activityRepoGitSshPassword,
+                        binding.activityRepoGitSshPasswordLayout,
+                        R.string.pref_key_git_ssh_key_password),
+                Field(
                         binding.activityRepoGitAuthor,
                         binding.activityRepoGitAuthorLayout,
                         R.string.pref_key_git_author),
@@ -369,7 +373,8 @@ class GitRepoActivity : CommonActivity(), GitPreferences {
             return HTTPSTransportSetter(username, password)
         } else {
             val sshKeyPath = withDefault(binding.activityRepoGitSshKey.text.toString(), R.string.pref_key_git_ssh_key_path)
-            return GitSSHKeyTransportSetter(sshKeyPath)
+            val password = binding.activityRepoGitSshPassword.text.toString()
+            return GitSSHKeyTransportSetter(sshKeyPath, password)
         }
     }
 
