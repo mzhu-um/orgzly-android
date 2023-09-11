@@ -1,9 +1,13 @@
 package com.orgzly.android.repos;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.net.Uri;
 import android.util.Log;
+import android.view.LayoutInflater;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.orgzly.android.App;
 import com.orgzly.android.BookName;
 import com.orgzly.android.db.entity.Repo;
 import com.orgzly.android.git.GitFileSynchronizer;
@@ -11,6 +15,7 @@ import com.orgzly.android.git.GitPreferences;
 import com.orgzly.android.git.GitPreferencesFromRepoPrefs;
 import com.orgzly.android.git.GitTransportSetter;
 import com.orgzly.android.prefs.RepoPreferences;
+import com.orgzly.databinding.DialogGitResetBinding;
 
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
@@ -51,18 +56,19 @@ public class GitRepo implements SyncRepo, TwoWaySyncRepo {
         }
     }
 
-    public static GitRepo getInstance(RepoWithProps props, Context context) throws IOException {
+    public static GitRepo getInstance(RepoWithProps props, Context ctx) throws IOException {
         // TODO: This doesn't seem to be implemented in the same way as WebdavRepo.kt, do
         //  we want to store configuration data the same way they do?
         Repo repo = props.getRepo();
         Uri repoUri = Uri.parse(repo.getUrl());
-        RepoPreferences repoPreferences = new RepoPreferences(context, repo.getId(), repoUri);
+        RepoPreferences repoPreferences = new RepoPreferences(ctx, repo.getId(), repoUri);
         GitPreferencesFromRepoPrefs prefs = new GitPreferencesFromRepoPrefs(repoPreferences);
-
         // TODO: Build from info
 
         return build(props.getRepo().getId(), prefs, false);
     }
+
+
 
     private static GitRepo build(long id, GitPreferences prefs, boolean clone) throws IOException {
         Git git = ensureRepositoryExists(prefs, clone, null);
@@ -263,6 +269,40 @@ public class GitRepo implements SyncRepo, TwoWaySyncRepo {
         return ignores;
     }
 
+    public void promptResetForDirtyRepo(Context context) {
+        var changes = synchronizer.getChanges();
+        if (changes.isEmpty()) {
+            // no change, therefore no need to reset!
+            return;
+        }
+
+
+        Log.i("Git", String.format("Current context: %s.", context));
+
+        var dialog = DialogGitResetBinding.inflate(LayoutInflater.from(context));
+        dialog.gitUnstagedChanges.setText(changes);
+        DialogInterface.OnClickListener dialogClickListener = (theDialog, which) -> {
+            switch (which) {
+                case DialogInterface.BUTTON_POSITIVE: {
+                    try {
+                        synchronizer.gitResetToHead();
+                    } catch (GitAPIException e) {
+                        Log.e("Git", String.format("Error in resetting: %s", e.getMessage()));
+                    }
+                }
+                case DialogInterface.BUTTON_NEGATIVE: {
+                    // do nothing
+                }
+            }
+        };
+        var builder = (new MaterialAlertDialogBuilder(context))
+                .setTitle("Reset Git Repo to HEAD")
+                .setPositiveButton("Reset", dialogClickListener)
+                .setNegativeButton("Cancel", dialogClickListener);
+        builder.setView(dialog.getRoot());
+        builder.show();
+    }
+
     public List<VersionedRook> getBooks() throws IOException {
         synchronizer.setBranchAndGetLatest();
         List<VersionedRook> result = new ArrayList<>();
@@ -314,12 +354,15 @@ public class GitRepo implements SyncRepo, TwoWaySyncRepo {
     }
 
     public void delete(Uri deleteUri) throws IOException {
-        // FIXME: finish me
-        throw new IOException("Don't do that");
+        synchronizer.deleteExistingFile(stripLeadingRoot(deleteUri.getPath()));
     }
 
     public VersionedRook renameBook(Uri from, String name) throws IOException {
         return null;
+    }
+
+    private String stripLeadingRoot(String path) {
+        return path.startsWith("/") ? path.substring(1) : path;
     }
 
     @Override
@@ -335,7 +378,8 @@ public class GitRepo implements SyncRepo, TwoWaySyncRepo {
             RevCommit rookCommit = getCommitFromRevisionString(current.getRevision());
             Log.i("Git", String.format("File name %s, rookCommit: %s", fileName, rookCommit));
             boolean merged = synchronizer.updateAndCommitFileFromRevisionAndMerge(
-                    fromDB, fileName,
+                    fromDB,
+                    fileName,
                     synchronizer.getFileRevision(fileName, rookCommit),
                     rookCommit);
 
@@ -361,6 +405,7 @@ public class GitRepo implements SyncRepo, TwoWaySyncRepo {
                 currentVersionedRook(Uri.EMPTY.buildUpon().appendPath(fileName).build()), onMainBranch,
                 writeBack);
     }
+
 
     public void tryPushIfHeadDiffersFromRemote() {
         synchronizer.tryPushIfHeadDiffersFromRemote();

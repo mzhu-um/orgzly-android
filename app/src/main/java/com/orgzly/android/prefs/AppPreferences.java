@@ -903,9 +903,10 @@ public class AppPreferences {
      */
 
     public static boolean gitIsEnabled(Context context) {
-        return getDefaultSharedPreferences(context).getBoolean(
-                context.getResources().getString(R.string.pref_key_git_is_enabled),
-                context.getResources().getBoolean(R.bool.pref_default_git_is_enabled));
+        return true;
+//        return getDefaultSharedPreferences(context).getBoolean(
+//                context.getResources().getString(R.string.pref_key_git_is_enabled),
+//                context.getResources().getBoolean(R.bool.pref_default_git_is_enabled));
     }
 
     public static String gitAuthor(Context context) {

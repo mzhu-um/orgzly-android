@@ -1,6 +1,7 @@
 package com.orgzly.android.sync
 
 import android.content.Intent
+import android.util.Log
 import androidx.core.content.ContextCompat.startActivity
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LiveData
@@ -48,7 +49,7 @@ object SyncRunner {
         if (BuildConfig.LOG_DEBUG) LogUtils.d(TAG, activity, state)
 
         val msg = state.getDescription(activity)
-
+        Log.i("Git", String.format("Snack context: %s.", activity))
         activity.showSnackbar(msg, R.string.repositories) {
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 setClass(activity, ReposActivity::class.java)

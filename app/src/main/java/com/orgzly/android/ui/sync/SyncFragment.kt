@@ -19,6 +19,7 @@ import com.orgzly.R
 import com.orgzly.android.App
 import com.orgzly.android.data.DataRepository
 import com.orgzly.android.prefs.AppPreferences
+import com.orgzly.android.repos.GitRepo
 import com.orgzly.android.sync.SyncRunner
 import com.orgzly.android.sync.SyncState
 import com.orgzly.android.sync.SyncState.Companion.getInstance
@@ -108,6 +109,17 @@ class SyncFragment : Fragment() {
                     if (viewModel.allowSnackbarOnFailure && state.isFailure()) {
                         activity?.let {
                             SyncRunner.showSyncFailedSnackBar(it, state)
+                        }
+                        // offer a second chance
+                        val syncRepos = dataRepository.getSyncRepos();
+                        if (! syncRepos.isEmpty()) {
+                            val syncRepo = syncRepos[0];
+                            when (syncRepo) {
+                                is GitRepo -> {
+                                    val gRepo = syncRepo as GitRepo
+                                    gRepo.promptResetForDirtyRepo(context);
+                                }
+                            }
                         }
                     }
 

@@ -1,6 +1,7 @@
 package com.orgzly.android.sync
 
 import android.content.Context
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
@@ -40,6 +41,7 @@ class SyncWorker(val context: Context, val params: WorkerParameters) :
             SyncState.getInstance(SyncState.Type.CANCELED)
 
         } catch (e: Exception) {
+            Log.e("Sync", e.stackTraceToString());
             SyncState.getInstance(SyncState.Type.FAILED_EXCEPTION, e.localizedMessage)
         }
 

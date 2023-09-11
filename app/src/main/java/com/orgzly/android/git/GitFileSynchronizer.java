@@ -3,11 +3,15 @@ package com.orgzly.android.git;
 import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
+import android.app.Activity;
+import android.view.LayoutInflater;
+
 
 import androidx.annotation.NonNull;
 
 import com.orgzly.android.App;
 import com.orgzly.android.util.MiscUtils;
+import com.orgzly.databinding.DialogGitResetBinding;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand;
@@ -20,6 +24,7 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.merge.MergeStrategy;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
@@ -65,6 +70,15 @@ public class GitFileSynchronizer {
     public void retrieveLatestVersionOfFile(
             String repositoryPath, File destination) throws IOException {
         MiscUtils.copyFile(repoDirectoryFile(repositoryPath), destination);
+    }
+
+    public void overwrittenByRemote() throws  GitAPIException {
+        transportSetter()
+                .setTransport(git.pull()
+                        .setRemote(preferences.remoteName())
+                        .setRemoteBranchName("master")
+                        .setStrategy(MergeStrategy.THEIRS))
+                .call();
     }
 
     private void fetch() throws GitAPIException {
@@ -257,6 +271,12 @@ public class GitFileSynchronizer {
         git.reset().setMode(ResetCommand.ResetType.HARD).call();
     }
 
+
+
+    public void gitResetToHead() throws GitAPIException {
+        git.reset().setMode(ResetCommand.ResetType.HARD).call();
+    }
+
     public boolean updateAndCommitFileFromRevision(
             File sourceFile, String repositoryPath, ObjectId revision) throws IOException {
         ensureRepoIsClean();
@@ -348,6 +368,26 @@ public class GitFileSynchronizer {
         updateAndCommitFile(sourceFile, repositoryPath);
     }
 
+    public void deleteExistingFile(String filePath) throws IOException {
+        ensureRepoIsClean();
+        File destinationFile = repoDirectoryFile(filePath);
+        Log.i("Git", String.format("Try to delete the file (%s) at (%s).",
+                filePath,
+                destinationFile.getPath()));
+        if (! destinationFile.exists()) {
+            throw new IOException("Can't delete file " + destinationFile.getPath() + " that doesn't exist.");
+        }
+        try {
+            git.rm().addFilepattern(filePath).call();
+            // commit the change
+            Log.i("Git", String.format("File removed: %s", git.status().call().getRemoved()));
+            commit(String.format("Orgzly remove: %s", filePath));
+        } catch (GitAPIException e) {
+            throw new IOException("Failed to commit changes.");
+        }
+    }
+
+
     private RevCommit updateAndCommitFile(
             File sourceFile, String repositoryPath) throws IOException {
         File destinationFile = repoDirectoryFile(repositoryPath);
@@ -391,18 +431,36 @@ public class GitFileSynchronizer {
         return git.getRepository().getWorkTree().getAbsolutePath();
     }
 
+    public String getChanges() {
+        try {
+            Status status = git.status().call();
+            return String.format("Repo has the following uncommitted change(s):\n%s",
+                    status.getUncommittedChanges());
+        } catch (GitAPIException e) {
+            return String.format("Unknow Error Happens: %s.", e.getMessage());
+        }
+    }
+
     private boolean gitRepoIsClean() {
         try {
             Status status = git.status().call();
-            return !status.hasUncommittedChanges();
+            var hasChanges = status.hasUncommittedChanges();
+            if (hasChanges) {
+                Log.i("Git", String.format("Repo has the following uncommitted change(s):\n%s",
+                        status.getUncommittedChanges()));
+            }
+            return !hasChanges;
         } catch (GitAPIException e) {
             return false;
         }
     }
 
     private void ensureRepoIsClean() throws IOException {
-        if (!gitRepoIsClean())
+        if (!gitRepoIsClean()) {
             throw new IOException("Refusing to update because there are uncommitted changes.");
+        }
+
+
     }
 
     public File repoDirectoryFile(String filePath) {
