@@ -99,6 +99,7 @@
     <string name="closed">Closed</string>
 
     <!-- TODO: Not hints, rename -->
+    <string name="event_button_hint">Event time (Plain)</string>
     <string name="schedule_button_hint">Scheduled time</string>
     <string name="deadline_button_hint">Deadline time</string>
     <string name="closed_button_hint">Closed time</string>

@@ -200,6 +200,25 @@
                             android:src="@drawable/ic_close" />
                     </LinearLayout>
 
+                    <!-- Event time -->
+                    <LinearLayout
+                        android:id="@+id/event_time_container"
+                        style="@style/NoteFragmentMetadataItemContainer">
+
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/ic_add" />
+                        <TextView
+                            android:id="@+id/event_button"
+                            style="@style/NoteFragmentMetadataItemValueButton"
+                            android:hint="@string/event_button_hint"/>
+                        <ImageButton
+                            android:id="@+id/event_remove"
+                            style="@style/NoteFragmentMetadataItemButton"
+                            android:src="@drawable/ic_close" />
+                    </LinearLayout>
+
                     <!-- Scheduled time -->
                     <LinearLayout
                         android:id="@+id/scheduled_time_container"

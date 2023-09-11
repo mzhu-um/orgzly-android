@@ -10,10 +10,19 @@ class EventsInNote(private val originalTitle: String, private val originalConten
     private val eventsInContent: List<EventPosition>
 
     val timestamps: List<OrgRange>
+    val firstTimestamp: EventPosition?
 
     init {
         eventsInTitle = parseString(originalTitle)
         eventsInContent = parseString(originalContent)
+
+        if (!eventsInTitle.isEmpty()) {
+            firstTimestamp = eventsInTitle[0];
+        } else if (!eventsInContent.isEmpty()) {
+            firstTimestamp = eventsInContent[0];
+        } else {
+            firstTimestamp = null;
+        }
 
         timestamps = eventsInTitle.map { it.event } + eventsInContent.map { it.event }
     }

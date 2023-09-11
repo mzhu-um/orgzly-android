@@ -35,6 +35,7 @@ object OrgMapper {
 
             priority = note.priority
 
+
             scheduled = noteView.scheduledRangeString?.let { OrgRange.parse(it) }
             deadline = noteView.deadlineRangeString?.let { OrgRange.parse(it) }
             closed = noteView.closedRangeString?.let { OrgRange.parse(it) }
@@ -45,6 +46,7 @@ object OrgMapper {
     }
 
     fun toOrgHead(notePayload: NotePayload): OrgHead {
+
         return OrgHead().apply {
             title = notePayload.title
 

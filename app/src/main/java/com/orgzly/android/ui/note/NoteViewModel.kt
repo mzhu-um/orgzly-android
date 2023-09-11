@@ -18,6 +18,7 @@ import com.orgzly.android.ui.Place
 import com.orgzly.android.ui.SingleLiveEvent
 import com.orgzly.android.ui.main.MainActivity
 import com.orgzly.android.usecase.*
+import com.orgzly.android.util.EventsInNote
 import com.orgzly.android.util.MiscUtils
 import com.orgzly.org.OrgProperties
 import com.orgzly.org.datetime.OrgRange
@@ -59,6 +60,7 @@ class NoteViewModel(
     val bookChangeRequestEvent: SingleLiveEvent<List<BookView>> = SingleLiveEvent()
 
     var notePayload: NotePayload? = null
+    var eventTimestamp: EventsInNote? = null
 
     private var originalHash: Long = 0L
 
@@ -79,6 +81,10 @@ class NoteViewModel(
                 NoteBuilder.newPayload(App.getAppContext(), title.orEmpty(), content)
             } else {
                 dataRepository.getNotePayload(noteId)
+            }
+
+            eventTimestamp = notePayload?.let { payload ->
+                EventsInNote(payload.title, payload.content);
             }
 
             // Calculate payload's hash once for the original note
@@ -155,6 +161,8 @@ class NoteViewModel(
     fun updatePayloadScheduledTime(range: OrgRange?) {
         notePayload = notePayload?.copy(scheduled = range?.toString())
     }
+
+
 
     fun updatePayloadDeadlineTime(range: OrgRange?) {
         notePayload = notePayload?.copy(deadline = range?.toString())

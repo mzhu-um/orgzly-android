@@ -37,6 +37,7 @@ import com.orgzly.android.ui.notes.book.BookFragment
 import com.orgzly.android.ui.settings.SettingsActivity
 import com.orgzly.android.ui.share.ShareActivity
 import com.orgzly.android.ui.util.*
+import com.orgzly.android.util.EventsInNote
 import com.orgzly.android.util.LogUtils
 import com.orgzly.android.util.OrgFormatter
 import com.orgzly.android.util.SpaceTokenizer
@@ -189,6 +190,9 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
 
         binding.scheduledButton.setOnClickListener(this)
         binding.scheduledRemove.setOnClickListener(this)
+
+        binding.eventButton.setOnClickListener(this)
+        binding.eventRemove.setOnClickListener(this)
 
         binding.deadlineButton.setOnClickListener(this)
         binding.deadlineRemove.setOnClickListener(this)
@@ -420,6 +424,7 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
 
     private fun updateViewsFromPayload() {
         val payload = viewModel.notePayload ?: return
+        val eventTime = viewModel.eventTimestamp!!
 
         // State
         setStateView(payload.state)
@@ -435,6 +440,11 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
             binding.tagsButton.setText(TextUtils.join(" ", payload.tags))
         } else {
             binding.tagsButton.text = null
+        }
+
+        // Try parse the first nonempty line of the content as a TimeStamp
+        if (eventTime.firstTimestamp != null) {
+            updateTimestampView(TimeType.EVENT, eventTime.firstTimestamp.event);
         }
 
         // Times
@@ -686,6 +696,11 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
                 binding.deadlineRemove.invisibleIf(binding.deadlineButton.text.isNullOrEmpty())
             }
 
+            TimeType.EVENT -> {
+                binding.eventButton.text = range?.let { mUserTimeFormatter.formatAll(it) }
+                binding.eventRemove.invisibleIf(binding.eventButton.text.isNullOrEmpty())
+            }
+
             TimeType.CLOSED -> {
                 binding.closedButton.text = range?.let { mUserTimeFormatter.formatAll(it) }
                 binding.closedRemove.invisibleIf(binding.closedButton.text.isNullOrEmpty())
@@ -783,6 +798,22 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
                 setPriorityView(null)
             }
 
+            /* Setting event time. */
+            R.id.event_button ->
+                f = TimestampDialogFragment.getInstance(
+                    R.id.event_button,
+                    TimeType.EVENT,
+                    emptySet(), // Unused
+                    viewModel.eventTimestamp?.firstTimestamp?.event?.startTime
+                )
+
+            R.id.event_remove -> {
+                updateTimestampView(TimeType.EVENT, null)
+                // todo: update the event
+                // - modify if it exists
+                // - prepend a new line if blank
+            }
+
             /* Setting scheduled time. */
             R.id.scheduled_button ->
                 f = TimestampDialogFragment.getInstance(
@@ -854,6 +885,11 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
         val range = if (time != null) OrgRange(time) else null
 
         when (id) {
+            R.id.event_button -> {
+                updateTimestampView(TimeType.EVENT, range)
+                // TODO: here...
+            }
+
             R.id.scheduled_button -> {
                 updateTimestampView(TimeType.SCHEDULED, range)
                 viewModel.updatePayloadScheduledTime(range)
@@ -895,6 +931,12 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
             "scheduled_time",
             binding.scheduledTimeContainer,
             !TextUtils.isEmpty(binding.scheduledButton.text))
+
+        setMetadataViewsVisibility(
+            "event_time",
+            binding.eventTimeContainer,
+            !TextUtils.isEmpty(binding.eventButton.text))
+
 
         setMetadataViewsVisibility(
             "deadline_time",
