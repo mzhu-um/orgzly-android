@@ -2,6 +2,7 @@ package com.orgzly.android.ui.note
 
 import android.os.Bundle
 import android.text.TextUtils
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.orgzly.R
@@ -157,12 +158,23 @@ class NoteViewModel(
             notePayload = NoteBuilder.changeState(App.getAppContext(), it, state)
         }
     }
+    fun updatePayloadWithEventTime(range: OrgRange?)  : Pair<String, String?>? {
+        if (range == null || eventTimestamp == null)
+            return null
+        val p = eventTimestamp!!.replaceEvents(listOf(range))
+        val (title, content) = p
+        notePayload = notePayload?.copy(
+            content = content, title = title)
+        // load a new eventTimeStamp
+        eventTimestamp = notePayload?.let { payload ->
+            EventsInNote(payload.title, payload.content);
+        }
+        return p
+    }
 
     fun updatePayloadScheduledTime(range: OrgRange?) {
         notePayload = notePayload?.copy(scheduled = range?.toString())
     }
-
-
 
     fun updatePayloadDeadlineTime(range: OrgRange?) {
         notePayload = notePayload?.copy(deadline = range?.toString())

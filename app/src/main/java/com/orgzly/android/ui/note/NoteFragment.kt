@@ -37,7 +37,6 @@ import com.orgzly.android.ui.notes.book.BookFragment
 import com.orgzly.android.ui.settings.SettingsActivity
 import com.orgzly.android.ui.share.ShareActivity
 import com.orgzly.android.ui.util.*
-import com.orgzly.android.util.EventsInNote
 import com.orgzly.android.util.LogUtils
 import com.orgzly.android.util.OrgFormatter
 import com.orgzly.android.util.SpaceTokenizer
@@ -445,6 +444,7 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
         // Try parse the first nonempty line of the content as a TimeStamp
         if (eventTime.firstTimestamp != null) {
             updateTimestampView(TimeType.EVENT, eventTime.firstTimestamp.event);
+
         }
 
         // Times
@@ -887,7 +887,12 @@ class NoteFragment : CommonFragment(), View.OnClickListener, TimestampDialogFrag
         when (id) {
             R.id.event_button -> {
                 updateTimestampView(TimeType.EVENT, range)
-                // TODO: here...
+                val p = viewModel.updatePayloadWithEventTime(range)
+                if (p != null) {
+                    val (title, content) = p
+                    binding.title.setSourceText(title)
+                    binding.content.setSourceText(content)
+                }
             }
 
             R.id.scheduled_button -> {
